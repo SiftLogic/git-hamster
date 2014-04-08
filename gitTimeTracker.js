@@ -38,16 +38,21 @@ var Utility = function() {
     return commit.split('\n')[3].replace('Date:', '').trim();
   };
 
+  // Keeps on checking the git log for new changes, current latest commit is not added.
   var checkGit = function() {
     console.log('\nStarted to watch', PROJECT_LOCATION, 'for commit changes. ('+(INTERVAL/1000)+'s poll)', '\n');
 
     // Writes the latest unique commits to Hamster's database
+    var lastResult = null;
     setInterval(function() {
       u.execute(
         'cd ' + PROJECT_LOCATION + ';' +
         'git log -p -1',
       function(result) {
-        hamsterDB.insertCommit(getMessageName(result), getCommitTime(result));
+        if (lastResult !== null && lastResult !== result){
+          hamsterDB.insertCommit(getMessageName(result), getCommitTime(result));
+        } 
+        lastResult = result;
       });
     }, INTERVAL);
   };

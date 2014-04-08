@@ -12,6 +12,8 @@ module.exports = function(DATABASE_LOCATION) {
     id: null
   };
 
+  self.START_MESSAGE = 'Start of day';
+
   self.SCHEME = {
     workCategory: 1,
 
@@ -23,6 +25,12 @@ module.exports = function(DATABASE_LOCATION) {
       activity: 'activities'
     }
   }
+
+  // Given a list of objects retrieves an id, 1 if none could be found.
+  self.retrieveId = function(list) {
+    id = _.max(_.pluck(list, 'id')) + 1;
+    return (id > -1) ? id : 1;
+  };
 
   // Gets the next auto increment value for the given table and passes that into the first argument for the callback.
   self.getNextAutoIncrementFor = function(table, callback){
@@ -41,7 +49,7 @@ module.exports = function(DATABASE_LOCATION) {
     return partOfYear + ' ' + partOfDay;
   };
 
-  // Creates a new commit tag if necessary. Calls the callback when done. May be async.
+  // Creates a new commit tag if necessary. Also, creates a start task on load. Calls the callback when done. May be async.
   self.init = function(callback) {
     self.db.serialize(function() {
       self.db.all('SELECT * FROM '+self.SCHEME.tables.tag, function(err, data) {
@@ -58,15 +66,37 @@ module.exports = function(DATABASE_LOCATION) {
 
           self.getNextAutoIncrementFor(self.SCHEME.tables.tag, function(increment) {
             self.COMMIT_TAG.id = increment + 1;
-            callback();
+            self.createStartOfDay(true, callback);
           });
 
           self.db.run('INSERT INTO '+self.SCHEME.tables.tag+'(name,autocomplete) VALUES ("'+self.COMMIT_TAG.name+'","true")');
         } else {
-          callback();
+          self.createStartOfDay(true, callback);
         }
       });
     });
+  };
+
+  // Creates a start of day task starting now and ending one minute from now. Calls the callback once done.
+  self.createStartOfDay = function(canCreate, callback) {
+    if (!canCreate){
+      callback();
+    } else {
+      self.insertActivity(self.START_MESSAGE, function(activityId) {
+        self.db.all('SELECT * FROM '+self.SCHEME.tables.activity, function(err, data) {
+          if (err) {throw err};
+
+          console.log('Inserting start of day into hamster database on', new Date());
+
+          var oneMinuteFromNow = new Date((new Date).getTime() + 60000),
+              id = self.retrieveId(data);
+          self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 
+            [id, activityId, self.formatDate(new Date() + ''), self.formatDate(oneMinuteFromNow + '')], function() {
+              callback();
+          });
+        });
+      });
+    }
   };
 
   // Inserts an activity given the description if it does not already exist. Calls the callback with the id of the activity.
@@ -82,8 +112,7 @@ module.exports = function(DATABASE_LOCATION) {
       });
 
       if (activityId === null){
-        activityId = _.max(_.pluck(data, 'id')) + 1;
-        activityId = (activityId > -1) ? activityId : 0;
+        activityId = self.retrieveId(data);
 
         self.db.run('INSERT INTO '+self.SCHEME.tables.activity+'(id,name,category_id,search_name) VALUES (?,?,?,?)', 
           [activityId, description, self.SCHEME.workCategory, description.toLowerCase()],
@@ -128,8 +157,7 @@ module.exports = function(DATABASE_LOCATION) {
 
         // Has this task already been inserted
         if (id === null){
-          id = _.max(_.pluck(data, 'id')) + 1;
-          id = (id > -1) ? id : 0;
+          id = self.retrieveId(data);
 
           console.log('Inserting', description, 'into hamster database.');
           self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 

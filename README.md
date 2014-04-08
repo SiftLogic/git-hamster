@@ -9,4 +9,3 @@ Install
 =======
 npm install
 sudo apt-get install hamster-applet
-sudo apt-get install sqlite3
