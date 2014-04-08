@@ -3,10 +3,12 @@ var yargs = require('yargs')
     .example('$0 --startDayMessage --watchCommits=/opt/smuinew', '')
     .describe('startDayMessage', 'set a start of day message taking place now')
     .describe('watchCommits', 'watch the commit log at that location')
+    .describe('custom', 'start a custom named task')
     .check(function(argv) {
       return Boolean(
                       argv['startDayMessage'] ||
-                      (argv['watchCommits'] && argv['watchCommits'] !== true)
+                      (argv['watchCommits'] && argv['watchCommits'] !== true) ||
+                      (argv['custom'] && argv['custom'] !== true)
                     );
     })
     .argv;
@@ -67,12 +69,20 @@ var Utility = function() {
         'git log -p -1',
       function(result) {
         if (lastResult !== null && lastResult !== result){
-          hamsterDB.insertCommit(getMessageName(result), getCommitTime(result));
+          hamsterDB.insertCustom(getMessageName(result), true, getCommitTime(result));
         } 
         lastResult = result;
       });
     }, INTERVAL);
   };
 
-  hamsterDB.init(checkGit, Boolean(yargs.startDayMessage));
+  var checkCustom = function() {
+    if (yargs.custom){
+      hamsterDB.insertCustom(yargs.custom, new Date() + '', false, checkGit);
+    }
+
+    checkGit();
+  };
+
+  hamsterDB.init(checkCustom, Boolean(yargs.startDayMessage));
 })();
