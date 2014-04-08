@@ -83,6 +83,7 @@ module.exports = function(DATABASE_LOCATION) {
 
       if (activityId === null){
         activityId = _.max(_.pluck(data, 'id')) + 1;
+        activityId = (activityId > -1) ? activityId : 0;
 
         self.db.run('INSERT INTO '+self.SCHEME.tables.activity+'(id,name,category_id,search_name) VALUES (?,?,?,?)', 
           [activityId, description, self.SCHEME.workCategory, description.toLowerCase()],
@@ -117,13 +118,18 @@ module.exports = function(DATABASE_LOCATION) {
           }
 
           if (index === data.length - 1){
-            start = tag.start_time;
+            start = tag.end_time;
           }
         });
+
+        if (start === null){
+          throw('Error: There must be a time defined before a commit is logged.');
+        }
 
         // Has this task already been inserted
         if (id === null){
           id = _.max(_.pluck(data, 'id')) + 1;
+          id = (id > -1) ? id : 0;
 
           console.log('Inserting', description, 'into hamster database.');
           self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 

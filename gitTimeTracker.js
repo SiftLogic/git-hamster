@@ -26,7 +26,6 @@ var Utility = function() {
 (function main() {
   var u = new Utility(),
       file = new TimeTrackerFile(TIME_FILE),
-      times = new Times(file.getLastLine);
       hamsterDB = new HamsterDB(HAMSTER_DATABASE_FILE);
 
   // Extracts the commit message title (in some cases may be the whole commit) from the commit log string sent in.
