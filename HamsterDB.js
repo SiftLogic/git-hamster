@@ -163,7 +163,11 @@ module.exports = function(DATABASE_LOCATION) {
           console.log('Inserting', description, 'into hamster database.');
           self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 
             [id, activityId, start, end], function() {
-              self.addTagToTask(id);
+              if (hasTag){
+                self.addTagToTask(id, callback);
+              } else if (_.isFunction(callback)) {
+                callback();
+              }
           });
         }
       });
