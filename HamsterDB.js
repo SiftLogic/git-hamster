@@ -128,13 +128,12 @@ module.exports = function(DATABASE_LOCATION) {
     });
   };
 
-  self.addTagToTask = function(taskId, callback) {
-    self.db.run('INSERT INTO '+self.SCHEME.tables.taskTagMap+'(fact_id,tag_id) VALUES (?,?)', [taskId, self.COMMIT_TAG.id], callback);
+  self.addTagToTask = function(taskId) {
+    self.db.run('INSERT INTO '+self.SCHEME.tables.taskTagMap+'(fact_id,tag_id) VALUES (?,?)', [taskId, self.COMMIT_TAG.id]);
   };
 
-  // Inserts a commit fact with the correct timestamps, if it does not already exist. The start time is determined from the previous task. Calls the
-  // callback once finished.
-  self.insertCustom = function(description, end, hasTag, callback) {
+  // Inserts a commit fact with the correct timestamps, if it does not already exist. The start time is determined from the previous task.
+  self.insertCommit = function(description, end) {
     end = self.formatDate(end);
 
     self.insertActivity(description, function(activityId) {
@@ -164,11 +163,7 @@ module.exports = function(DATABASE_LOCATION) {
           console.log('Inserting', description, 'into hamster database.');
           self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 
             [id, activityId, start, end], function() {
-              if (hasTag){
-                self.addTagToTask(id, callback);
-              } else {
-                callback();
-              }
+              self.addTagToTask(id);
           });
         }
       });
