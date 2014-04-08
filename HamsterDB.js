@@ -133,7 +133,7 @@ module.exports = function(DATABASE_LOCATION) {
   };
 
   // Inserts a commit fact with the correct timestamps, if it does not already exist. The start time is determined from the previous task.
-  self.insertCommit = function(description, end) {
+  self.insertTask = function(description, end, hasTag, callback) {
     end = self.formatDate(end);
 
     self.insertActivity(description, function(activityId) {

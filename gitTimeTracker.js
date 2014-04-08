@@ -3,24 +3,24 @@ var yargs = require('yargs')
     .example('$0 --startDayMessage --watchCommits=/opt/smuinew', '')
     .describe('startDayMessage', 'set a start of day message taking place now')
     .describe('watchCommits', 'watch the commit log at that location')
+    .describe('task', 'log a task with custom name')
     .check(function(argv) {
       return Boolean(
-                      argv['startDayMessage'] ||
-                      (argv['watchCommits'] && argv['watchCommits'] !== true)
+                      argv.startDayMessage ||
+                      (argv.watchCommits && argv.watchCommits !== true) ||
+                      (argv.task && argv.task !== true)
                     );
     })
     .argv;
 
 var fs = require('fs'),
+    _ = require('lodash'),
     exec = require('child_process').exec;
-    TimeTrackerFile = require('./timeTrackerFile'),
     HamsterDB = require('./HamsterDB');
 
-var USERNAME = 'jacob',
-    TIME_FILE = '/home/'+USERNAME+'/timing/times.csv',
-    HAMSTER_DATABASE_FILE = '/home/jacob/.local/share/hamster-applet/hamster.db',// Assuming default Hamster install location
+var HAMSTER_DATABASE_FILE = '/home/'+process.env.USER+'/.local/share/hamster-applet/hamster.db',// Assuming default Hamster install location
     PROJECT_LOCATION = yargs.watchCommits,
-    INTERVAL = 1000;// The log will be checked for changes at this interval in ms
+    INTERVAL = 2000;
 
 var Utility = function() {
   var self = this || {};
@@ -38,7 +38,6 @@ var Utility = function() {
 
 (function main() {
   var u = new Utility(),
-      file = new TimeTrackerFile(TIME_FILE),
       hamsterDB = new HamsterDB(HAMSTER_DATABASE_FILE);
 
   // Extracts the commit message title (in some cases may be the whole commit) from the commit log string sent in.
@@ -48,12 +47,14 @@ var Utility = function() {
 
   // Extract the commit time from the sent in commit log string sent in.
   var getCommitTime = function(commit) {
-    return commit.split('\n')[3].replace('Date:', '').trim();
+    return _.find(commit.split('\n'), function(part, index) {
+      return part.indexOf('Date:') > -1;
+    }).replace('Date:', '').trim();
   };
 
   // Keeps on checking the git log for new changes, current latest commit is not added.
   var checkGit = function() {
-    if (!yargs['watchCommits']){
+    if (!yargs.watchCommits){
       return true;
     }
 
@@ -67,12 +68,22 @@ var Utility = function() {
         'git log -p -1',
       function(result) {
         if (lastResult !== null && lastResult !== result){
-          hamsterDB.insertCommit(getMessageName(result), getCommitTime(result));
+          hamsterDB.insertTask(getMessageName(result), getCommitTime(result), true);
         } 
         lastResult = result;
       });
     }, INTERVAL);
   };
 
-  hamsterDB.init(checkGit, Boolean(yargs.startDayMessage));
+  var customCreate = function() {
+    if (yargs.task){
+      hamsterDB.insertTask(yargs.task, new Date() + '', false, checkGit);
+    } else {
+      checkGit();
+    }
+  }
+
+  u.execute('echo $USER', function(result) {
+    hamsterDB.init(customCreate, Boolean(yargs.startDayMessage));
+  });
 })();
