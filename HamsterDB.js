@@ -49,8 +49,9 @@ module.exports = function(DATABASE_LOCATION) {
     return partOfYear + ' ' + partOfDay;
   };
 
-  // Creates a new commit tag if necessary. Also, creates a start task on load. Calls the callback when done. May be async.
-  self.init = function(callback) {
+  // Creates a new commit tag if necessary. Calls the callback when done. May be async. other arguments:
+  // createStartOfDay: if false no start of day task will be created. If there are no tasks this can cause the commit logging to crash.
+  self.init = function(callback, createStartOfDay) {
     self.db.serialize(function() {
       self.db.all('SELECT * FROM '+self.SCHEME.tables.tag, function(err, data) {
         if (err) {throw err};
@@ -66,12 +67,12 @@ module.exports = function(DATABASE_LOCATION) {
 
           self.getNextAutoIncrementFor(self.SCHEME.tables.tag, function(increment) {
             self.COMMIT_TAG.id = increment + 1;
-            self.createStartOfDay(true, callback);
+            self.createStartOfDay(createStartOfDay, callback);
           });
 
           self.db.run('INSERT INTO '+self.SCHEME.tables.tag+'(name,autocomplete) VALUES ("'+self.COMMIT_TAG.name+'","true")');
         } else {
-          self.createStartOfDay(true, callback);
+          self.createStartOfDay(createStartOfDay, callback);
         }
       });
     });

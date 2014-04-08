@@ -6,6 +6,11 @@
   "scripts": {
     "test": "node gitTimeTracker.js"
   },
+  "dependencies": {
+    "lodash": "*",
+    "sqlite3": "2.2.0",
+    "yargs": "1.2.1"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/Jacob-Friesen/SuperGitTimeTracker.js.git"

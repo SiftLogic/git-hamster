@@ -1,3 +1,16 @@
+var yargs = require('yargs')
+    .usage('Tracks time of tasks and inserts those into Project Hamster.\nUsage: $0')
+    .example('$0 --startDayMessage --watchCommits=/opt/smuinew', '')
+    .describe('startDayMessage', 'set a start of day message taking place now')
+    .describe('watchCommits', 'watch the commit log at that location')
+    .check(function(argv) {
+      return Boolean(
+                      argv['startDayMessage'] ||
+                      (argv['watchCommits'] && argv['watchCommits'] !== true)
+                    );
+    })
+    .argv;
+
 var fs = require('fs'),
     exec = require('child_process').exec;
     TimeTrackerFile = require('./timeTrackerFile'),
@@ -6,7 +19,7 @@ var fs = require('fs'),
 var USERNAME = 'jacob',
     TIME_FILE = '/home/'+USERNAME+'/timing/times.csv',
     HAMSTER_DATABASE_FILE = '/home/jacob/.local/share/hamster-applet/hamster.db',// Assuming default Hamster install location
-    PROJECT_LOCATION = '/opt/smuinew',
+    PROJECT_LOCATION = yargs.watchCommits,
     INTERVAL = 1000;// The log will be checked for changes at this interval in ms
 
 var Utility = function() {
@@ -40,6 +53,10 @@ var Utility = function() {
 
   // Keeps on checking the git log for new changes, current latest commit is not added.
   var checkGit = function() {
+    if (!yargs['watchCommits']){
+      return true;
+    }
+
     console.log('\nStarted to watch', PROJECT_LOCATION, 'for commit changes. ('+(INTERVAL/1000)+'s poll)', '\n');
 
     // Writes the latest unique commits to Hamster's database
@@ -57,5 +74,5 @@ var Utility = function() {
     }, INTERVAL);
   };
 
-  hamsterDB.init(checkGit);
+  hamsterDB.init(checkGit, Boolean(yargs.startDayMessage));
 })();
