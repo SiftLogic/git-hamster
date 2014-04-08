@@ -1,0 +1,26 @@
+{
+  "name": "SuperGitTimeTracker",
+  "version": "0.0.1",
+  "description": "A git based time tracker to integrate with hamster",
+  "main": "HamsterDB.js",
+  "scripts": {
+    "test": "node gitTimeTracker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Jacob-Friesen/SuperGitTimeTracker.js.git"
+  },
+  "keywords": [
+    "node",
+    "git",
+    "loggger",
+    "sqlite3",
+    "project",
+    "hamster"
+  ],
+  "author": "Jacob Friesen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jacob-Friesen/SuperGitTimeTracker.js/issues"
+  }
+}
