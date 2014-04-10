@@ -137,7 +137,7 @@ module.exports = function(DATABASE_LOCATION) {
     end = self.formatDate(end);
 
     self.insertActivity(description, function(activityId) {
-      self.db.all('SELECT * FROM '+self.SCHEME.tables.task, function(err, data) {
+      self.db.all('SELECT * FROM '+self.SCHEME.tables.task + ' ORDER BY end_time', function(err, data) {
         if (err) {throw err};
 
         var id = null,
