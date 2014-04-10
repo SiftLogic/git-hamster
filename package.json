@@ -1,8 +1,8 @@
 {
   "name": "SuperGitTimeTracker",
-  "version": "0.0.1",
-  "description": "A git based time tracker to integrate with hamster",
-  "main": "HamsterDB.js",
+  "version": "0.1.0",
+  "description": "Integrates git command watches with the Hamster Project",
+  "main": "gitTimeTracker.js",
   "scripts": {
     "test": "node gitTimeTracker.js"
   },
@@ -13,19 +13,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Jacob-Friesen/SuperGitTimeTracker.js.git"
+    "url": "git://github.com/SiftLogic/git-hamster.git"
   },
   "keywords": [
     "node",
     "git",
-    "loggger",
+    "logger",
     "sqlite3",
     "project",
     "hamster"
   ],
   "author": "Jacob Friesen",
   "license": "MIT",
+  "copyright": "Copyright (c) 2014 SiftLogic",
   "bugs": {
-    "url": "https://github.com/Jacob-Friesen/SuperGitTimeTracker.js/issues"
+    "url": "https://github.com/SiftLogic/git-hamster.git/issues"
   }
 }
