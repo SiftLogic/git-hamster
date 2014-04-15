@@ -83,20 +83,8 @@ module.exports = function(DATABASE_LOCATION) {
     if (!canCreate){
       callback();
     } else {
-      self.insertActivity(self.START_MESSAGE, function(activityId) {
-        self.db.all('SELECT * FROM '+self.SCHEME.tables.activity, function(err, data) {
-          if (err) {throw err};
-
-          console.log('Inserting start of day into hamster database on', new Date());
-
-          var oneMinuteFromNow = new Date((new Date).getTime() + 60000),
-              id = self.retrieveId(data);
-          self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 
-            [id, activityId, self.formatDate(new Date() + ''), self.formatDate(oneMinuteFromNow + '')], function() {
-              callback();
-          });
-        });
-      });
+      var oneMinuteFromNow = new Date((new Date).getTime() + 60000);
+      self.insertTask(self.START_MESSAGE, oneMinuteFromNow, false, callback, new Date());
     }
   };
 
@@ -132,22 +120,25 @@ module.exports = function(DATABASE_LOCATION) {
     self.db.run('INSERT INTO '+self.SCHEME.tables.taskTagMap+'(fact_id,tag_id) VALUES (?,?)', [taskId, self.COMMIT_TAG.id]);
   };
 
-  // Inserts a commit fact with the correct timestamps, if it does not already exist. The start time is determined from the previous task.
-  self.insertTask = function(description, end, hasTag, callback) {
+  // Inserts a commit fact with the correct timestamps, if it does not already exist. The start time is determined from the previous task or from the
+  // sent in start if defined.
+  self.insertTask = function(description, end, hasTag, callback, start) {
     end = self.formatDate(end);
+    if (_.isDate(start)) {
+      start = self.formatDate(start);
+    }
 
     self.insertActivity(description, function(activityId) {
       self.db.all('SELECT * FROM '+self.SCHEME.tables.task + ' ORDER BY end_time', function(err, data) {
         if (err) {throw err};
 
-        var id = null,
-            start = null;
+        var id = null;
         data.forEach(function(tag, index) {
           if (tag.activity_id === activityId && tag.end_time == end){
             id = tag.id;
           }
 
-          if (index === data.length - 1){
+          if (index === data.length - 1 && _.isEmpty(start)){
             start = tag.end_time;
           }
         });
@@ -160,7 +151,7 @@ module.exports = function(DATABASE_LOCATION) {
         if (id === null){
           id = self.retrieveId(data);
 
-          console.log('Inserting', description, 'into hamster database.');
+          console.log('Inserting', description, 'into hamster database at', end, '.');
           self.db.run('INSERT INTO '+self.SCHEME.tables.task+'(id,activity_id,start_time,end_time) VALUES (?,?,?,?)', 
             [id, activityId, start, end], function() {
               if (hasTag){
